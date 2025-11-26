@@ -14,3 +14,4 @@ def test_integration_echo():  # <- 2 linhas em branco aqui!
     resp = client.post("/echo", json=payload)
     assert resp.status_code == 200
     assert resp.json == {"you_sent": payload}
+    

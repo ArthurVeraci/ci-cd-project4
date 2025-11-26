@@ -13,3 +13,4 @@ def test_echo():  # <- 2 linhas em branco aqui!
     resp = client.post("/echo", json={"msg": "hello"})
     assert resp.status_code == 200
     assert resp.json == {"you_sent": {"msg": "hello"}}
+    
