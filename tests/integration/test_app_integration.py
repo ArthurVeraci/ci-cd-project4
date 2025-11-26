@@ -1,15 +1,16 @@
-import requests
-import time
+from app.app import app
 
-BASE = "http://localhost:5000"
 
-def test_home_up():
-    r = requests.get(f"{BASE}/", timeout=5)
-    assert r.status_code == 200
+def test_integration_home():
+    client = app.test_client()
+    resp = client.get("/")
+    assert resp.status_code == 200
+    assert resp.data.decode() == "Aplicação Flask"
 
-def test_slow_endpoint():
-    t0 = time.time()
-    r = requests.get(f"{BASE}/slow", timeout=5)
-    t = time.time() - t0
-    assert r.status_code == 200
-    assert t >= 0.2
+
+def test_integration_echo():  # <- 2 linhas em branco aqui!
+    client = app.test_client()
+    payload = {"x": 123}
+    resp = client.post("/echo", json=payload)
+    assert resp.status_code == 200
+    assert resp.json == {"you_sent": payload}
