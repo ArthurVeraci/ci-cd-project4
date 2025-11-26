@@ -49,43 +49,53 @@ jobs:
     needs: unit-tests
     steps:
       - uses: actions/checkout@v3
+      
       - name: Build docker image for integration
         run: |
           docker build -t flask-ci-integration:latest .
-      - - name: Run container
-          run: |
-          docker run -d --name test-app -p 5000:5000 flask-ci-integration:latest
-          sleep 3  # dá tempo pro Gunicorn iniciar
-      - n- name: Wait for app
+      
+      - name: Run container
         run: |
-          echo "🔍 Checking container status..."
+          docker run -d --name test-app -p 5000:5000 flask-ci-integration:latest
+          echo "Container started, waiting 5 seconds..."
+          sleep 5
+          
+      - name: Debug - Check container
+        run: |
+          echo "=== Container Status ==="
           docker ps -a
           echo ""
-          echo "📋 Container logs:"
+          echo "=== Container Logs ==="
           docker logs test-app
           echo ""
-          echo "⏳ Waiting for app to be ready..."
+          echo "=== Test curl ==="
+          curl -v http://localhost:5000/ || true
+          
+      - name: Wait for app
+        run: |
           for i in $(seq 1 30); do
             if curl -f -sS http://localhost:5000/ >/dev/null 2>&1; then
-              echo "✅ App is up and responding!"
+              echo "✅ App is up!"
               exit 0
             fi
-            echo "Attempt $i/30 - waiting..."
+            echo "⏳ Attempt $i/30..."
             sleep 2
           done
-          echo "❌ App failed to start after 60 seconds"
-          echo "📋 Final container logs:"
+          echo "❌ Failed to start"
           docker logs test-app
           exit 1
+      
       - name: Run integration tests
         run: |
           pip install -r requirements.txt
           pytest tests/integration --junitxml=reports/integration-junit.xml -q
+      
       - name: Stop container
         if: always()
         run: |
-          docker stop test-app
-          docker rm test-app
+          docker stop test-app || true
+          docker rm test-app || true
+      
       - name: Upload integration junit
         if: always()
         uses: actions/upload-artifact@v4
